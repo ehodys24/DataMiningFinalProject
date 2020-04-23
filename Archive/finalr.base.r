@@ -19,23 +19,6 @@ data.transformed$listensBin[which(data.transformed$listens < 40000 & data.transf
 data.transformed$listensBin[which(data.transformed$listens < 50000 & data.transformed$listens > 40000)]  <-  5
 data.transformed$listensBin[which(data.transformed$listens < 60000 & data.transformed$listens > 50000)]  <-  6
 
-data.transformed$listens[which(data.transformed$listens < 20,000 & data.transformed$listens > 10,000)]
-
-data.clean %>% count(listens > 0 & listens < 10000)
-data.transformed %>% count(listens > 0 & listens < 10000)
-
-data.transformed %>% count(listensBin == 1)
-data.transformed %>% count(listensBin == 2)
-
-
-data.transformed %>% count(listensBin == 0)
-data.transformed %>% count(listensBin == 1)
-data.transformed %>% count(listensBin == 2)
-data.transformed %>% count(listensBin == 3)
-data.transformed %>% count(listensBin == 4)
-data.transformed %>% count(listensBin == 5)
-data.transformed %>% count(listensBin == 6)
-
 hist(data.transformed$listensBin)
 
 
