@@ -1,44 +1,18 @@
 library(dlookr)
 library(dplyr)
 
-data.raw=read.csv("cleandata_final.csv")
-
-data.raw %>% count(listens < 0)
+data.raw=read.csv("wranglingFinalData.csv")
 
 data.clean <- data.raw
-data.clean$listens[data.clean$listens < 0] <- 0
-data.clean %>% count(listens < 0)
+data.tree <- data.clean
 
-data.transformed <- data.clean
-data.transformed$listensBin <- 0 
-#data.transformed$listensBin 
-data.transformed$listensBin[which(data.transformed$listens < 10000)]  <-  1
-data.transformed$listensBin[which(data.transformed$listens < 20000 & data.transformed$listens > 10000)]  <-  2
-data.transformed$listensBin[which(data.transformed$listens < 30000 & data.transformed$listens > 20000)]  <-  3
-data.transformed$listensBin[which(data.transformed$listens < 40000 & data.transformed$listens > 30000)]  <-  4
-data.transformed$listensBin[which(data.transformed$listens < 50000 & data.transformed$listens > 40000)]  <-  5
-data.transformed$listensBin[which(data.transformed$listens < 60000 & data.transformed$listens > 50000)]  <-  6
+index.collection <- sample(nrow(data.tree ),nrow(data.tree )*0.80)
+data.tree.train <- data.tree[index.collection,]
+data.tree.test <- data.tree[-index.collection,]
 
-data.transformed$listens[which(data.transformed$listens < 20,000 & data.transformed$listens > 10,000)]
-
-data.clean %>% count(listens > 0 & listens < 10000)
-data.transformed %>% count(listens > 0 & listens < 10000)
-
-data.transformed %>% count(listensBin == 1)
-data.transformed %>% count(listensBin == 2)
-
-
-data.transformed %>% count(listensBin == 0)
-data.transformed %>% count(listensBin == 1)
-data.transformed %>% count(listensBin == 2)
-data.transformed %>% count(listensBin == 3)
-data.transformed %>% count(listensBin == 4)
-data.transformed %>% count(listensBin == 5)
-data.transformed %>% count(listensBin == 6)
-
-hist(data.transformed$listensBin)
-
-test=data.transformed[,44:198]
+cols <- c(4,12)
+which(colnames(data.tree.train)=="danceability")
+test=data.tree.train[,cols]
 wss <- (nrow(test)-1)*sum(apply(test,2,var))
 for (i in 2:10) wss[i] <- sum(kmeans(test,
                                      centers=i)$withinss)
@@ -69,3 +43,40 @@ cluster6
 test.dist=dist(test)
 test.hclust=hclust(test.dist, method="ward")
 plot(test.hclust)
+
+library(fpc)
+library(dbscan)
+library(meanShiftR)
+#Mean-Shift Clustering
+
+## an example using the iris dataset
+## help( iris )
+
+## prepare data matrix (a subset of the iris dataset)
+set.seed( 2 )
+indices <- sample( 1:nrow( iris ), 80 )
+iris.data <- t( iris[indices,c( "Sepal.Length", "Sepal.Width" )] )
+
+## run mean shift algorithm
+clustering <- msClustering( iris.data, h=0.8 )
+print( clustering )
+
+## plot the clusters
+## Not run: 
+plot( iris.data[1,], iris.data[2,], col=clustering$labels+2, cex=0.8,
+      pch=16, xlab="Sepal.Length", ylab="Sepal.Width" )
+points( clustering$components[1,], clustering$components[2,],
+        col=2+( 1:ncol( clustering$components ) ), cex=1.8, pch=16 )
+## End(Not run)
+
+
+
+## using multiple cores (2)
+## Not run: 
+options( mc.cores=2 )
+clustering.mc <- msClustering( iris.data, multi.core=TRUE )
+## End(Not run)
+
+#(DBSCAN)
+
+
