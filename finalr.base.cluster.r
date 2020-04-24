@@ -38,7 +38,34 @@ data.transformed %>% count(listensBin == 6)
 
 hist(data.transformed$listensBin)
 
+test=data.transformed[,44:198]
+wss <- (nrow(test)-1)*sum(apply(test,2,var))
+for (i in 2:10) wss[i] <- sum(kmeans(test,
+                                     centers=i)$withinss)
+plot(1:10, wss, type="b", xlab="Number of Clusters",ylab="Within groups sum of squares", main="WSS vs Cluster number")
 
+library(factoextra)
+fit_2 <- kmeans(test, 2)
+cluster2 = fviz_cluster(fit_2, data = test)
 
+fit_3 <- kmeans(test, 3)
+cluster3 = fviz_cluster(fit_3, data = test)
 
- 
+fit_4 <- kmeans(test, 4)
+cluster4 = fviz_cluster(fit_4, data = test)
+
+fit_5 <- kmeans(test, 5)
+cluster5 = fviz_cluster(fit_5, data = test)
+
+fit_6 <- kmeans(test, 6)
+cluster6 = fviz_cluster(fit_6, data = test)
+
+cluster2
+cluster3
+cluster4
+cluster5
+cluster6
+
+test.dist=dist(test)
+test.hclust=hclust(test.dist, method="ward")
+plot(test.hclust)
