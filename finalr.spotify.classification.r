@@ -38,18 +38,39 @@ fancyRpartPlot(tree.beta.fit, caption = 'Popular')
 
 data.tree.train %>% count(isMale)
 data.tree.train.popular <- data.tree.train
-data.tree.train.popular$popbin <- data.tree.train.popular$track_popularity
-data.tree.train.popular$popbin <- 1 #"High"
-data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity < 90)] <- 0# "Mid"
+
+#data.tree.train.popular$popbin <- factor('H')
+cut <- 90
+data.tree.train.popular <- mutate(data.tree.train.popular, popbin = factor(case_when(track_popularity >= cut ~ "H",
+                                                                                     track_popularity < cut ~ "M",
+                                             TRUE                ~ "M")))
+
+hist(data.tree.train.popular$danceability)
+cut <- .95
+data.tree.train.popular <- mutate(data.tree.train.popular, dancebin = factor(case_when(danceability >= cut ~ "H",
+                                                                                       danceability < cut ~ "M",
+                                                                                     TRUE                ~ "M")))
+
+data.tree.train.popular %>% count(dancebin)
+#data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity >= 90)] <- factor('H')
+
+# list <- which(data.tree.train.popular$track_popularity < 90)
+# list
+# data.tree.train.popular$popbin[1] #<- factor('M')
+# data.tree.train.popular$popbin[1] = factor('M')
+# data.tree.train.popular %>% count(popbin)
+# data.tree.train.popular %>% count(popbin)
+
 #data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity < 40)] <- "Low"
 
 
-data.tree.train.popular %>% count(popbin)
-parms = list(loss = matrix(c(0, 2, 1, 0), ncol = 2))
-tree.beta.fit = rpart(parms=parms, data=data.tree.train.popular, data.tree.train.popular$popbin ~ duration_ms + danceability + energy + key + loudness + acousticness	+ instrumentalness + liveness + valence + 	tempo )
+data.tree.train.popular %>% count(isMale)
+parms = list(loss = matrix(c(0, 1, 1, 0), ncol = 2))
+tree.beta.fit = rpart(parms=parms, data=data.tree.train.popular, data.tree.train.popular$isMale ~ loudness )
 prp(tree.beta.fit)					# Will plot the tree
 prp(tree.beta.fit,varlen=15)				# Shorten variable names
-
+windows(20,20)
+rpart.plot(tree.beta.fit)
 printcp(tree.beta.fit)
 plotcp(tree.beta.fit)
 tree.beta.fit.pruned <- prune(tree.beta.fit,.01)
@@ -86,17 +107,42 @@ prp(tree.beta.fit.pruned)					# Will plot the tree
 prp(tree.beta.fit.pruned,varlen=15)				# Shorten variable names
 
 
+data.tree.train.popular <- data.tree.train
+cut <-  90
+data.tree.train.popular <- mutate(data.tree.train.popular, popbin = factor(case_when(track_popularity >= cut ~ "H",
+                                                                                     track_popularity < cut ~ "M",                                                                                   
+                                                                                     TRUE                ~ "M")))
+data.tree.train.popular %>% count(popbin)
+
+rmse_reg <- function(model_obj, testing = NULL, target = NULL) {
+  #Calculates rmse for a regression decision tree
+  #Arguments:
+  # testing - test data set
+  # target  - target variable (length 1 character vector)
+  yhat <- predict(model_obj, newdata = testing)
+  actual <- testing[[target]]
+  sqrt(mean((yhat-actual)^2))
+}
 
 
 library(party)
-fit <- ctree(popbin ~ energy +  loudness,   data=data.tree.train.popular)
-plot(fit, main="Conditional Inference Tree for Kyphosis")
+#+ key + loudness + acousticness
+fit <- ctree(danceability ~ energy + key + loudness + acousticness	+ instrumentalness + liveness + valence + 	tempo    ,   data=data.tree.train.popular)
+windows(20,20)
+plot(fit, main="Popbin")
+mse <- rmse_reg(fit,data.tree.test, "danceability")
 
+insamp <- predict(fit)
+outsamp<- predict(fit,data.tree.test)
 
+mspe.in <- rmse_reg(fit, data.tree.train.popular, "danceability")
+mspe.out <- rmse_reg(fit, data.tree.test, "danceability")
 
+mspe.in
+mspe.out
 
 library(randomForest)
-fit <- randomForest(popbin ~ energy +  danceability  + key + loudness,   data=data.tree.train.popular)
+fit <- randomForest(popbin ~ energy +  danceability  +  loudness,   data=data.tree.train.popular)
 print(fit) # view results
 importance(fit) # importance of each predictor
 plot(fit, main="Conditional Inference Tree for Popularity Bin")
