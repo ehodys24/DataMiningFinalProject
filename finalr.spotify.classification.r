@@ -2,6 +2,8 @@ library(dlookr)
 library(dplyr)
 library(dbscan)
 library(meanShiftR)
+library(xgboost) # for xgboost
+library(tidyverse) # general utility functions
 
 data.raw=read.csv("wranglingFinalData.csv")
 
@@ -37,8 +39,8 @@ fancyRpartPlot(tree.beta.fit, caption = 'Popular')
 data.tree.train %>% count(isMale)
 data.tree.train.popular <- data.tree.train
 data.tree.train.popular$popbin <- data.tree.train.popular$track_popularity
-data.tree.train.popular$popbin <- "High"
-data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity < 90)] <- "Mid"
+data.tree.train.popular$popbin <- 1 #"High"
+data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity < 90)] <- 0# "Mid"
 #data.tree.train.popular$popbin[which(data.tree.train.popular$track_popularity < 40)] <- "Low"
 
 
@@ -83,4 +85,48 @@ tree.beta.fit.pruned <- prune(tree.beta.fit,.011215)
 prp(tree.beta.fit.pruned)					# Will plot the tree
 prp(tree.beta.fit.pruned,varlen=15)				# Shorten variable names
 
- 
+
+
+
+library(party)
+fit <- ctree(popbin ~ energy +  loudness,   data=data.tree.train.popular)
+plot(fit, main="Conditional Inference Tree for Kyphosis")
+
+
+
+
+library(randomForest)
+fit <- randomForest(popbin ~ energy +  danceability  + key + loudness,   data=data.tree.train.popular)
+print(fit) # view results
+importance(fit) # importance of each predictor
+plot(fit, main="Conditional Inference Tree for Popularity Bin")
+
+
+# 
+# ####################################################################################################
+# # train a model using our training data
+# model <- xgboost(data = as.matrix(data.tree.train.popular[,12:13]),
+#                  label=data.tree.train.popular$track_popularity,
+#                  nround = 2 # max number of boosting iterations
+#                   # the objective function
+# )
+# 
+# dtrain <- xgb.DMatrix(data = as.matrix(data.tree.train.popular[,12:13]), label= data.tree.train.popular$track_popularity)
+# model_tuned <- xgboost(data = dtrain, # the data           
+#                        max.depth = 3, # the maximum depth of each decision tree
+#                        nround = 10, # number of boosting rounds
+#                        early_stopping_rounds = 3, # if we dont see an improvement in this many rounds, stop
+#                       # objective = "binary:logistic", # the objective function
+#                        #scale_pos_weight = negative_cases/postive_cases, # control for imbalanced classes
+#                        gamma = 1) # add a regularization term
+# 
+# # generate predictions for our held-out testing data
+# pred <- predict(model, as.matrix(data.tree.train[,12:13]))
+# 
+# # get & print the classification error
+# err <- mean(as.numeric(pred > 0.5) != data.tree.train$danceability)
+# print(paste("test-error=", err))
+# 
+# xgb.plot.tree(model = model)
+# xgb.plot.
+# colnames(data.tree.train[,12:15])
