@@ -8,26 +8,40 @@ library(rpart)
 library(rattle)
 library(rpart.plot)
 library(RColorBrewer)
+library(purrr)
+library(tidyr)
+library(ggplot2)
 
 data.raw=read.csv("wranglingFinalData.csv")
 
+
+data.raw %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_histogram()
 
 data.clean <- data.raw
 data.tree <- data.clean
 
 
 hist(data.tree$danceability)
-cut <- .70
+cut <- .80
 data.tree <- mutate(data.tree, dancebin = factor(case_when(danceability >= cut ~ "H",
-                                                                       danceability < cut ~ "M",
+                                                                       #danceability < cut ~ "M",
                                                                        TRUE                ~ "M")))
+
+# data.tree <- mutate(data.tree, popbin = factor(case_when(track_popularity >= cut ~ "H",
+#                                                          #track_popularity < cut ~ "M",
+#                                                            TRUE                ~ "M")))
 # cut.hi <-  .70
 # cut.trash <- .35
 # data.tree.3cut <- mutate(data.tree, dancebin = factor(case_when(danceability >= cut.hi ~ "H",
 #                                                                  danceability < cut.trash ~ "L",
 #                                                                  #danceability < cut.trash ~ "L")))
  #                                                                TRUE                ~ "M")))
-#data.tree.3cut %>% count(dancebin)
+data.tree %>% count(dancebin)
 
 #data.tree <- data.tree.3cut
 index.collection <- sample(nrow(data.tree ),nrow(data.tree )*0.80)
@@ -46,7 +60,8 @@ tree.pruned <- prune.rpart(tree.spotify.1, cp_choose)
 tree.pred <- predict(tree.pruned, newdata = data.tree.test , type = "class")
 confusion.matrix <- table(tree.pred, data.tree.test$dancebin)
 confusion.matrix
-
+tree.pruned
+hist(data.raw)
 sum(diag(confusion.matrix)) / sum(confusion.matrix)  # the % accuracy on the test set. 
 windows(20,20)
 rpart.plot(tree.spotify.1)
@@ -72,7 +87,7 @@ index.collection <- sample(nrow(data.tree ),nrow(data.tree )*0.80)
 data.tree.train <- data.tree[index.collection,]
 data.tree.test <- data.tree[-index.collection,]
 #key + loudness + acousticness	+ instrumentalness + liveness +
-tree.spotify.1 <- rpart(isMale ~  + energy +   valence + key,
+tree.spotify.1 <- rpart(playlist_genre ~  energy +   valence + key + loudness + acousticness	+ instrumentalness + liveness +	tempo,
                         data = data.tree.train, method = "class", subset = index.collection)
 cp_choose <- tree.spotify.1$cptable[,1][which.min(tree.spotify.1$cptable[,4])]
 tree.pruned <- prune.rpart(tree.spotify.1, cp_choose)
@@ -87,9 +102,16 @@ prp(tree.spotify.1,varlen=15)
 
 
 
-
-
-
+#+ key + loudness + acousticness	+ instrumentalness + liveness +
+fit <- ctree(dancebin ~    tempo + key,    
+             data=data.tree.train)
+print(fit)
+windows(20,20)
+plot(fit, main="Popbin")
+predictions <- predict(fit, data.tree.test)
+confusion.matrix <- table(predictions, data.tree.test$isMale)
+confusion.matrix
+sum(diag(confusion.matrix)) / sum(confusion.matrix) 
 
 
 
