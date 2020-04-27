@@ -74,9 +74,9 @@ points( clustering$components[1,], clustering$components[2,],
 ## using multiple cores (2)
 ## Not run: 
 options( mc.cores=2 )
-clustering.mc <- msClustering( iris.data, multi.core=TRUE )
+clustering.mc <- meanShift( iris.data, multi.core=TRUE )
 ## End(Not run)
-
+dbscan::
 #(DBSCAN)
 
 
