@@ -40,10 +40,12 @@ corrplot(datacor, type="upper")
 
 
 
-cut <- .80
-# data.tree <- mutate(data.tree, dancebin = factor(case_when(danceability >= cut ~ "H",
-#                                                                        #danceability < cut ~ "M",
-#                                                                        TRUE                ~ "M")))
+precentile.cut <- .75
+data.tree <- mutate(data.tree, dancebin = factor(case_when(danceability >= precentile.cut ~ "H",
+                                                                      TRUE                ~ "M")))
+index.collection <- sample(nrow(data.tree ),nrow(data.tree )*0.80)
+data.tree.train <- data.tree[index.collection,]
+data.tree.test <- data.tree[-index.collection,]
 
 cut = 86
 data.tree <- mutate(data.tree, popbin = factor(case_when(track_popularity >= cut ~ "H",
@@ -57,7 +59,7 @@ data.tree <- mutate(data.tree, popbin = factor(case_when(track_popularity >= cut
  #                                                                TRUE                ~ "M")))
 data.tree %>% count(popbin)
 
-#data.tree <- data.tree.3cut
+
 index.collection <- sample(nrow(data.tree ),nrow(data.tree )*0.80)
 data.tree.train <- data.tree[index.collection,]
 data.tree.test <- data.tree[-index.collection,]
@@ -69,7 +71,7 @@ set.seed(13603433)
 #key + loudness + acousticness	+ instrumentalness + liveness +
 col=c(12:26)
 data.tree.train.sub <- data.tree.train[,col] 
-tree.spotify.1 <- rpart(popbin ~ energy +  danceability  + loudness + acousticness	,
+tree.spotify.1 <- rpart(danceability ~ energy +  danceability  + loudness + acousticness + key + track_popularity + liveness + valence + 	tempo 	,
                         data = data.tree.train.sub, method = "class", subset = index.collection)
 cp_choose <- tree.spotify.1$cptable[,1][which.min(tree.spotify.1$cptable[,4])]
 tree.pruned <- prune.rpart(tree.spotify.1, cp_choose)
